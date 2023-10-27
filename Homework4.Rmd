@@ -1,0 +1,75 @@
+---
+title: "Homework4"
+output: html_document
+date: "2023-10-27"
+---
+
+## Load lobraries
+```{r}
+library(sf)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(janitor)
+library(countrycode)
+library(MazamaSpatialUtils)
+
+```
+
+## Load data
+```{r}
+Global_gender_inequality_data <- read.csv("Data/HDR21-22_Composite_indices_complete_time_series.csv") %>%
+  clean_names(case = "big_camel")
+
+World_Shape <- st_read("Data/World_Countries_Generalized/World_Countries_Generalized.shp") %>%
+  clean_names(case = "big_camel")
+```
+
+## Manipulate data
+```{r}
+Global_gii <- Global_gender_inequality_data %>%
+  select(Iso3, Country, Hdicode, HdiRank2021, Gii2010, Gii2019) %>%
+  filter(., HdiRank2021!="NA") %>%
+  filter(., Gii2010!="NA") %>%
+  mutate(Diff = Gii2019-Gii2010)
+
+# Method 1
+World_Shape_Iso3_Method1 <- World_Shape %>%
+  mutate(Iso3 = countrycode(World_Shape$Country, origin = 'country.name', destination = 'iso3c'))
+
+MergedData01 <- World_Shape_Iso3_Method1 %>% 
+  left_join(., 
+            Global_gii,
+            by = c("Iso3" = "Iso3"))
+MergedData01 <- filter(MergedData01, Diff != "NA")
+
+# Method 2
+World_Shape_Iso3_Method2 <- World_Shape %>%
+  mutate(Iso3 = iso2ToIso3(World_Shape$Iso))
+
+MergedData02 <- World_Shape_Iso3_Method2 %>% 
+  left_join(., 
+            Global_gii,
+            by = c("Iso3" = "Iso3"))
+MergedData02 <- filter(MergedData02, Diff != "NA")
+```
+
+Its a experimental test for comparing left join with different columns.
+```{r}
+MergedDataTest <- World_Shape_Iso3 %>% 
+  left_join(., 
+            Global_gii,
+            by = c("Country" = "Country"))
+MergedDataTest <- filter(MergedDataTest, Diff != "NA")
+```
+
+
+
+
+
+
+
+
+
+
+
